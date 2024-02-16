@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name=”viewport” content=”width=device-width; initial-scale=1.0; maximum-scale=1.0;”>
+    <meta http-equiv=”Content-Type” content=”text/html; charset=utf-8″ />
+    <title>Smart Garden Control</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background: url('https://cdn.pixabay.com/photo/2020/02/03/20/49/technology-4816658_1280.jpg') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 5px;
+            z-index: 1000;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 5px;
+        }
+
+        .graph-container {
+            display: flex;
+            justify-content: center;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .toggle {
+            display: flex;
+            justify-content: center;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .battre {
+            display: flex;
+            justify-content: center;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            margin: 10px;
+            padding: 20px;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            transition: transform 0.3s ease-in-out;
+            max-width: calc(25% - 30px);
+            width: 100%;
+        }
+
+        #dateTimeCard {
+            margin: 10px;
+            padding: 20px;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            transition: transform 0.3s ease-in-out;
+            max-width: calc(25% - 30px);
+            width: 100%;
+        }
+
+        .spacer {
+            height: 20px; /* Sesuaikan dengan tinggi spasi yang Anda inginkan */
+        }
+
+        /* Menambahkan aturan media query untuk tata letak responsif */
+        @media only screen and (max-width: 400px) {
+            header,
+            footer {
+                position: static; /* Mengubah posisi header dan footer menjadi statis pada layar kecil */
+                width: 100%; /* Mengisi lebar penuh pada layar kecil */
+            }
+
+            .card, #dateTimeCard {
+                max-width: 100%; /* Mengubah lebar kartu menjadi 100% pada layar kecil */
+            }
+
+            .spacer {
+                height: 10px; /* Mengurangi tinggi spasi pada layar kecil */
+            }
+        }
+
+        .card:hover, #dateTimeCard:hover {
+            transform: scale(1.05);
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #batteryIndicator, #dateTime {
+            font-size: 18px;
+            margin-top: 20px;
+            overflow: auto;
+        }
+
+        canvas {
+            margin-top: 20px;
+            max-width: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Smart Garden Control</h1>
+    </header>
+    <div class="spacer"></div> <!-- Tambahkan elemen div untuk memberikan spasi di bagian bawah -->
+
+    <!-- Battery Level Card -->
+    <div class="battre">
+        <div class="card">
+            <i class="fas fa-battery-full fa-3x mb-3"></i>
+            <h5 class="card-title">Battery Level</h5>
+            <p id="batteryLevel">100%</p>
+        </div>
+
+        <!-- Jam dan Tanggal -->
+        <div class="card" id="dateTimeCard">
+            <i class="far fa-clock fa-3x mb-3"></i>
+            <h5 class="card-title">Date & Time</h5>
+            <p id="dateTime">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Grafik Suhu, Kelembaban Udara, Kelembaban Tanah, Kadar pH Tanah -->
+    <div class="graph-container">
+        <!-- Grafik Suhu -->
+        <div class="card">
+            <i class="fas fa-thermometer-half fa-3x mb-3"></i>
+            <h5 class="card-title">Temperature</h5>
+            <canvas id="temperatureChart" width="300" height="150"></canvas>
+        </div>
+
+        <!-- Grafik Kelembaban Udara -->
+        <div class="card">
+            <i class="fas fa-tint fa-3x mb-3"></i>
+            <h5 class="card-title">Humidity</h5>
+            <canvas id="humidityChart" width="300" height="150"></canvas>
+        </div>
+
+        <!-- Grafik Kelembaban Tanah -->
+        <div class="card">
+            <i class="fas fa-seedling fa-3x mb-3"></i>
+            <h5 class="card-title">Soil Humidity</h5>
+            <canvas id="soilDataChart" width="300" height="150"></canvas>
+        </div>
+
+        <!-- Grafik Kadar pH Tanah -->
+        <div class="card">
+            <i class="fas fa-flask fa-3x mb-3"></i>
+            <h5 class="card-title">Soil pH</h5>
+            <canvas id="phDataChart" width="300" height="150"></canvas>
+        </div>
+    </div>
+
+<!-- Toggle Buttons -->
+<div class="toggle">
+    <div class="card">
+        <i class="fas fa-lightbulb fa-3x mb-3"></i>
+        <h5 class="card-title">Lamp Control</h5>
+        <button class="btn btn-primary" onclick="toggleDevice('light')">Toggle Lamp</button>
+    </div>
+
+    <div class="card">
+        <i class="fas fa-tint fa-3x mb-3"></i>
+        <h5 class="card-title">Pump Control</h5>
+        <button class="btn btn-success" onclick="toggleDevice('pump')">Toggle Pump</button>
+    </div>
+
+    <!-- Toggle Speaker -->
+    <div class="card">
+        <i class="fas fa-volume-up fa-3x mb-3"></i>
+        <h5 class="card-title">Speaker Control</h5>
+        <button class="btn btn-warning" onclick="toggleDevice('speaker')">Toggle Speaker</button>
+    </div>
+</div>
+
+
+  <!-- Footer -->
+<footer>
+    <p>Copyright © Adzi Purnomo 2024</p>
+    <div class="social-icons">
+        <!-- Tautan Facebook -->
+        <a href="https://www.facebook.com/adzy.evolution" target="_blank">
+            <i class="fab fa-facebook"></i>
+        </a>
+        
+        <!-- Tautan Twitter -->
+        <a href="https://twitter.com/adzy_purnomo" target="_blank">
+            <i class="fab fa-twitter"></i>
+        </a>
+
+        <!-- Tautan Instagram -->
+        <a href="https://www.instagram.com/adzp18/" target="_blank">
+            <i class="fab fa-instagram"></i>
+        </a>
+    </div>
+</footer>
+
+    <script>
+        // Inisialisasi nilai baterai
+        let batteryLevel = 100;
+
+        // Inisialisasi data grafik
+        let temperatureData = [];
+        let humidityData = [];
+        let soilData = [];
+        let phData = [];
+
+        // Inisialisasi grafik
+        const temperatureChart = createChart('temperatureChart', 'Temperature', temperatureData, 'rgba(255, 99, 132, 0.8)');
+        const humidityChart = createChart('humidityChart', 'Humidity', humidityData, 'rgba(75, 192, 192, 0.8)');
+        const soilDataChart = createChart('soilDataChart', 'Soil Humidity', soilData, 'rgba(255, 206, 86, 0.8)');
+        const phDataChart = createChart('phDataChart', 'Soil pH', phData, 'rgba(54, 162, 235, 0.8)');
+
+        function createChart(canvasId, label, data, color) {
+            return new Chart(document.getElementById(canvasId).getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: label,
+                        borderColor: color,
+                        data: data,
+                        fill: false,
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: [{
+                            type: 'linear',
+                            position: 'bottom'
+                        }]
+                    }
+                }
+            });
+        }
+
+        // Fungsi untuk mengganti status perangkat (lampu/pompa)
+        function toggleDevice(device) {
+            // Lakukan logika penggantian status perangkat di sini
+            // Misalnya, jika perangkat hidup, matikan; jika mati, hidupkan.
+            alert(`Toggle ${device}`);
+        }
+
+        // Fungsi untuk mengupdate indikator baterai
+        function updateBatteryIndicator() {
+            document.getElementById('batteryLevel').innerText = batteryLevel + '%';
+        }
+
+        // Fungsi untuk mengupdate grafik
+        function updateChart(chart, newData) {
+            chart.data.labels.push(chart.data.labels.length + 1);
+            chart.data.datasets[0].data.push(newData);
+            chart.update();
+        }
+
+        // Fungsi untuk memperbarui jam dan tanggal
+        function updateDateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', timeZoneName: 'short' };
+            const formattedDateTime = now.toLocaleDateString('en-US', options);
+            document.getElementById('dateTime').innerText = formattedDateTime;
+        }
+
+        // Contoh: mengurangi level baterai setiap detik
+        setInterval(function() {
+            batteryLevel -= 1;
+            if (batteryLevel < 0) {
+                batteryLevel = 0;
+            }
+            updateBatteryIndicator();
+
+            // Contoh: meng-update data grafik setiap detik
+            const temperatureValue = Math.random() * 30 + 20; // contoh data suhu
+            const humidityValue = Math.random() * 50 + 50; // contoh data kelembaban udara
+            const soilValue = Math.random() * 100; // contoh data kelembaban tanah
+            const phValue = Math.random() * 14; // contoh data kadar pH tanah
+
+            updateChart(temperatureChart, temperatureValue);
+            updateChart(humidityChart, humidityValue);
+            updateChart(soilDataChart, soilValue);
+            updateChart(phDataChart, phValue);
+
+            // Memperbarui jam dan tanggal setiap detik
+            updateDateTime();
+        }, 1000);
+    </script>
+
+</body>
+</html>
